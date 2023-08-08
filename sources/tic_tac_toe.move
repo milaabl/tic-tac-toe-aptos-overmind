@@ -192,6 +192,9 @@ module overmind::tic_tac_toe {
         player_one_address: address, 
         player_two_address: address
     ) acquires State {
+
+        check_if_user_has_enough_apt_coin(player_one_address, PRIZE_AMOUNT_APT);
+
         // TODO: Ensure the creator has enough apt
         // 
         // HINT: 
@@ -462,64 +465,54 @@ module overmind::tic_tac_toe {
     inline fun check_if_user_has_enough_apt_coin(user: address, amount_of_apt: u64) {
         // TODO: Ensure the user has equal or greater balance of apt than `amount_of_apt`. If false,
         //          abort with code: EInsufficientAptBalance
-        
+
+        let user_balance = coin::balance<AptosCoin>(user);
+
+        assert!(user_balance >= amount_of_apt, EInsufficientAptBalance);
     }
 
     inline fun check_if_players_are_different(player_one: address, player_two: address) {
-        // TODO: Ensure the two player addresses are not the same. If they are the same,
-        //          abort with code: EPlayerAddressesAreTheSame
-        
+        assert!(player_one != player_two, EPlayerAddressesAreTheSame);
     }
 
     inline fun check_if_game_id_is_valid(game_count: u64, game_id: u64) {
-        // TODO: Ensure the game_id is less than the game_count. If not, abort with code: 
-        //          EInvalidGameId
-        
+        assert!(game_id < game_count, EInvalidGameId);
     }
 
     inline fun check_if_user_is_player(user: &address, game: &Game) {
-        // TODO: Ensure the user is a player in the given game. If not, abort with code: 
-        //          EUserNotPlayer
-        
+        assert!(user == &game.player_one || user == &game.player_two, EUserNotPlayer);
     }
 
     inline fun check_if_game_has_no_result(game: &Game) {
-        // TODO: Ensure the given game has no result yet. If not, abort with code: EGameHasResult
-        
+        assert!(option::is_none(&game.result), EGameHasResult);
     }
 
     inline fun check_if_it_is_players_turn(player: &address, game: &Game) {
-        // TODO: Ensure it is the player's turn. If not, abort with code: ENotPlayersTurn
-        
+        assert!((&game.player_one == player && game.current_turn == PLAYER_ONE) || (&game.player_two == player && game.current_turn == PLAYER_TWO), ENotPlayersTurn);
     }
 
     inline fun check_if_turn_is_expired(game: &Game) {
-        // TODO: Ensure the given timestamp is greater than the current time. If it is, abort with 
-        //          code: ETurnIsExpired
+        let current_timestamp = timestamp::now_seconds();
+        assert!(game.expiration_timestamp_seconds > current_timestamp, ETurnIsExpired);
         
     }
 
     inline fun check_if_space_numbers_are_valid(row_index: u8, column_index: u8) {
-        // TODO: Ensure the row and column indices are less then 3. If not, abort with code: 
-        //          EInvalidSpaceIndices
-        
+        assert!(row_index < 3 && column_index < 3, EInvalidSpaceIndices);
     }
 
     inline fun check_if_space_is_open(space: &mut Option<u8>) {
-        // TODO: Ensure given space is not already marked. If it is, abort with code: 
-        //          ESpaceAlreadyMarked
-        
+        assert!(option::is_none(space), ESpaceAlreadyMarked);
     }
 
     inline fun check_if_game_is_expired(expiration_timestamp_seconds: u64) {
-        // TODO: Ensure given timestamp is less than the current time. If it is, abort with code: 
-        //          EGameIsNotExpired
+        let current_timestamp = timestamp::now_seconds();
+        assert!(current_timestamp < expiration_timestamp_seconds, EGameIsNotExpired);
         
     }
 
     inline fun check_if_prize_is_unclaimed(result: &Option<u8>) {
-        // TODO: Ensure the result is none. If it is, abort with code: EPrizeAlreadyClaimed
-        
+        assert!(option::contains(result, &0) == true, EPrizeAlreadyClaimed);
     }
 
     //==============================================================================================
