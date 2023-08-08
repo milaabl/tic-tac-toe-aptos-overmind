@@ -172,13 +172,44 @@ module overmind::tic_tac_toe {
 		@param admin - Signer representing the admin's account
     */
     fun init_module(admin: &signer) {
-
+        
         // TODO: Create resource account with admin and the provided SEED const
+        let resource_account = resource_account::create_resource_account(admin, SEED);
+
+        let resource_account_address = signer::address_of(resource_account);
+        
 
         // TODO: Register the resource account with the the AptosCoin
+        coin::register<AptosCoin>(resource_account_address);
+
+        let account_cap = resource_account::retrieve_resource_account_cap();
+
+        /*
+            # To-do
+
+            For reference:
+
+            
+            move_to(resource_account, CollectionTokenMinter {
+            public_key,
+            signer_cap: resource_signer_cap,
+            token_data_id,
+            expiration_timestamp,
+            minting_enabled: true,
+            token_minting_events: account::new_event_handle<TokenMintingEvent>(&resource_signer),
+        });
+        */
+
 
         // TODO: Create the State resource and move it to the resource account
         
+        move_to(resource_account, State {
+            signer_cap: account_cap,
+            game_count: 0, 
+            games: vector()
+        });
+
+        // let state = borrow_global<State>(resource_account_address);
     }
 
     /* 
@@ -193,22 +224,16 @@ module overmind::tic_tac_toe {
         player_two_address: address
     ) acquires State {
 
-        check_if_user_has_enough_apt_coin(player_one_address, PRIZE_AMOUNT_APT);
-
-        // TODO: Ensure the creator has enough apt
-        // 
-        // HINT: 
-        //      - Use PRIZE_AMOUNT_APT for the amount of apt to check for
-        //      - Use the check_if_user_has_enough_apt_coin function
+        check_if_user_has_enough_apt_coin(signer::address_of(game_creator), PRIZE_AMOUNT_APT);
 
         // TODO: Transfer PRIZE_AMOUNT_APT of apt from the game_creator to the module's resource
         //          account
         //
         // HINT: Make sure to use the PRIZE_AMOUNT_APT constant
 
-        // TODO: Ensure the two player addresses are different
-        // 
-        // HINT: Use the check_if_players_are_different function
+        coin::transfer<AptosCoin>(game_creator, account::get_signer_capability_address(state.signer_cap), PRIZE_AMOUNT_APT);
+
+        check_if_players_are_different(player_one_address, player_2_address);
 
         // TODO: Increment the State's game counter
 
