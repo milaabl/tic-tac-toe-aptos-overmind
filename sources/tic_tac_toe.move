@@ -184,29 +184,15 @@ module overmind::tic_tac_toe {
 
         let account_cap = resource_account::retrieve_resource_account_cap();
 
-        /*
-            # To-do
-
-            For reference:
-
-            
-            move_to(resource_account, CollectionTokenMinter {
-            public_key,
-            signer_cap: resource_signer_cap,
-            token_data_id,
-            expiration_timestamp,
-            minting_enabled: true,
-            token_minting_events: account::new_event_handle<TokenMintingEvent>(&resource_signer),
-        });
-        */
-
-
-        // TODO: Create the State resource and move it to the resource account
-        
         move_to(resource_account, State {
             signer_cap: account_cap,
             game_count: 0, 
-            games: vector()
+            games: vector(),
+            game_won_events: account::new_event_handle<GameWonEvent>(&resource_account),
+            game_tied_events: account::new_event_handle<GameTiedEvent>(&resource_account),
+            game_round_events: account::new_event_handle<GameRoundEvent>(&resource_account),
+            game_created_events: account::new_event_handle<GameCreatedEvent>(&resource_account),
+            game_expired_events: account::new_event_handle<GameExpiredEvent>(&resource_account)
         });
 
         // let state = borrow_global<State>(resource_account_address);
@@ -478,9 +464,19 @@ module overmind::tic_tac_toe {
         @param spaces - the current spaces of the game
 		@return - true if the entire board is filled and false otherwise
     */  
+
+    inline fun check_if_space_is_full(has_not_full: bool, space: Option<u8>): bool {
+            if (!has_not_full && (option::contains<u8>(space, &1) == true || option::contains(space, &2) == true)) {
+                return true;
+            }
+            else {
+                return false;
+            }
+    }
+
     inline fun game_spaces_are_full(spaces: &vector<vector<Option<u8>>>): bool {
         // TODO: Return true if all of the spaces are filled and false otherwise
-        
+        return vector::fold<bool, vector<Option<u8>>>(&spaces, false, &check_if_space_is_full);
     }
 
     //==============================================================================================
@@ -488,11 +484,7 @@ module overmind::tic_tac_toe {
     //==============================================================================================
 
     inline fun check_if_user_has_enough_apt_coin(user: address, amount_of_apt: u64) {
-        // TODO: Ensure the user has equal or greater balance of apt than `amount_of_apt`. If false,
-        //          abort with code: EInsufficientAptBalance
-
         let user_balance = coin::balance<AptosCoin>(user);
-
         assert!(user_balance >= amount_of_apt, EInsufficientAptBalance);
     }
 
